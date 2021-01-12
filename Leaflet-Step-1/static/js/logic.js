@@ -1,108 +1,136 @@
 //can get basic information from the website for leavelet and chloropleth
-// Creating our initial map object
-// We set the longitude, latitude, and the starting zoom level
-// This gets inserted into the div with an id of 'map'
-// Creating map object
+//INSTRUCTIONS create leaflet mep for earthquakes
+//using dataset based on their lng and lat
+//markers size/colors to refelct magnitude of earthquakes by size and depth
+//magnitude = size, depth = color
 
-//this is a function with two parameters string "map" (with div tag for map in HTML)and object tileLayer
-  //Leaflet can support many tilelayers (backgrounds) - this one is from mapbox
-  //alternately set long, lat, starting zoom level 1/4 var myMap = L.map("map").setView([45.52, -122.67], 13);
-var myMap = L.map("map", {
-    center: [34.0522, -118.2437],
-    zoom: 8
-  });
+//file layout https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson
+//features [{"type": "Feature", "properties": {"mag". 6.3, }}]
+//????where is the depth??
+
+
+//STEPS
+// see leaflet and chloropleth websites
+// create initial map object - inserted into div with id of 'map'
+//set long, lat, starting zoom level
+// add tile layer (background map) - use addTo to add objects to our map
+
+var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=" +
+  "2014-01-02&maxlongitude=-69.52148437&minlongitude=-123.83789062&maxlatitude=48.74894534&minlatitude=25.16517337";
+
+// Perform a GET request to the query URL
+d3.json(queryUrl, function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  createFeatures(data.features);
+
+});
+
+function createFeatures(earthquakeData) {
+
+  // Define a function we want to run once for each feature in the features array
+  // Give each feature a popup describing the place and time of the earthquake
+  //onEach is a leaflet feature
+  function onEachFeature(feature, layer) {
+    layer.bindPopup("<h3>" + feature.properties.place +
+      "</h3><hr><p>" + feature.properties.mag + "</p>" + new Date(feature.properties.time) + "</p>");
+  }
+
+function markerSize(magnitude) {
+  return feature.properties.mag
   
-  // Adding a tile layer (the background map image) to our map
-// We use the addTo method to add objects to our map
-// see 1/8 can toggle between different backgrounds by setting light and dark layers
-//can also have base and overlay maps or multiple overlays see 1/8
-  // Adding tile layer
-  L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  function onEachFeature(feature, layer) {
+    layer.bindPopup(marker"<h3>" + feature.properties.place +
+      "</h3><hr><p>" + feature.properties.mag + "</p>" + new Date(feature.properties.time) + "</p>");
+  }
+
+//replace the popup with a marker
+var marker = L.marker([37.09, -95.71].addTo(myMap);
+// create circle
+L.circle([37.09, -95.71]), {
+  color: "green",
+  fillColor: "green",
+  fillOpacity: 0.75,
+  radius: 500
+  }).addTo(myMap);
+
+//bind popup to marker
+marker.bindPopup("my popup")
+
+// Add a legend
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (map) {
+
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 10, 20, 50, 60, 70],
+        labels = [];
+
+    // loop through our density intervals and generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+    }
+
+    return div;
+};
+
+legend.addTo(map);
+
+  // Create a GeoJSON layer containing the features array on the earthquakeData object
+  // Run the onEachFeature function once for each piece of data in the array
+  var earthquakes = L.geoJSON(earthquakeData, {
+    onEachFeature: onEachFeature
+  });
+
+  // Sending our earthquakes layer to the createMap function
+  createMap(earthquakes);
+
+}
+
+function createMap(earthquakes) {
+
+  // Define streetmap and darkmap layers
+  var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
     tileSize: 512,
     maxZoom: 18,
     zoomOffset: -1,
     id: "mapbox/streets-v11",
     accessToken: API_KEY
-  }).addTo(myMap);
-  //this is just an object
-
-  // Load in geojson data
-  var geoData = "static/data/Median_Household_Income_2016.geojson";
-  
-  var geojson;
-  
-  // Grab data with d3
-  d3.json(geoData, function(data) {
-  
-    // Create a new choropleth layer
-    geojson = L.choropleth(data, {
-  
-      // Define what  property in the features to use
-      valueProperty: "MHI2016",
-  
-      // Set color scale
-      scale: ["#ffffb2", "#b10026"],
-  
-      // Number of breaks in step range
-      steps: 10,
-  
-      // q for quartile, e for equidistant, k for k-means
-      mode: "q",
-      style: {
-        // Border color
-        color: "#fff",
-        weight: 1,
-        fillOpacity: 0.8
-      },
-  
-      // Binding a pop-up to each layer
-      onEachFeature: function(feature, layer) {
-        layer.bindPopup("Zip Code: " + feature.properties.ZIP + "<br>Median Household Income:<br>" +
-          "$" + feature.properties.MHI2016);
-      }
-    }).addTo(myMap);
-  
-    // Set up the legend
-    var legend = L.control({ position: "bottomright" });
-    legend.onAdd = function() {
-      //call back function 
-      var div = L.DomUtil.create("div", "info legend");
-      var limits = geojson.options.limits;
-      var colors = geojson.options.colors;
-      var labels = [];
-  
-      // Add min & max
-      //based on html syntax
-      var legendInfo = "<h1>Median Income</h1>" +
-        "<div class=\"labels\">" +
-          "<div class=\"min\">" + limits[0] + "</div>" +
-          "<div class=\"max\">" + limits[limits.length - 1] + "</div>" +
-        "</div>";
-  
-  //write own html code
-      div.innerHTML = legendInfo;
-  
-      limits.forEach(function(limit, index) {
-        labels.push("<li style=\"background-color: " + colors[index] + "\"></li>");
-      });
-  //set as a list and return a dev
-      div.innerHTML += "<ul>" + labels.join("") + "</ul>";
-      return div;
-    };
-  
-    // Adding legend to the map
-    legend.addTo(myMap);
-  
   });
- 
-  
-  //Notes ***************************
-  //add city layer in 1/8
-  // 1/9 can also create layer groups
-//   / Function to determine marker size based on population
-// function markerSize(population) {
-//   return population / 40;
-// }
 
+  var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "dark-v10",
+    accessToken: API_KEY
+  });
 
+  // Define a baseMaps object to hold our base layers
+  var baseMaps = {
+    "Street Map": streetmap,
+    "Dark Map": darkmap
+  };
+
+  // Create overlay object to hold our overlay layer
+  var overlayMaps = {
+    Earthquakes: earthquakes
+  };
+
+  // Create our map, giving it the streetmap and earthquakes layers to display on load
+  var myMap = L.map("map", {
+    center: [
+      37.09, -95.71
+    ],
+    zoom: 5,
+    layers: [streetmap, earthquakes]
+  });
+
+  // Create a layer control
+  // Pass in our baseMaps and overlayMaps
+  // Add the layer control to the map
+  L.control.layers(baseMaps, overlayMaps, {
+    collapsed: false
+  }).addTo(myMap);
+}
