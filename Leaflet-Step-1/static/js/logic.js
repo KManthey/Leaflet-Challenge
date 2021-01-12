@@ -15,6 +15,9 @@
 //set long, lat, starting zoom level
 // add tile layer (background map) - use addTo to add objects to our map
 
+// Store our API endpoint inside queryUrl
+
+//can change this query information to filter or call different data.
 var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=" +
   "2014-01-02&maxlongitude=-69.52148437&minlongitude=-123.83789062&maxlatitude=48.74894534&minlatitude=25.16517337";
 
@@ -22,7 +25,7 @@ var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&
 d3.json(queryUrl, function(data) {
   // Once we get a response, send the data.features object to the createFeatures function
   createFeatures(data.features);
-
+  console.log(data)
 });
 
 function createFeatures(earthquakeData) {
@@ -30,57 +33,44 @@ function createFeatures(earthquakeData) {
   // Define a function we want to run once for each feature in the features array
   // Give each feature a popup describing the place and time of the earthquake
   //onEach is a leaflet feature
-  function onEachFeature(feature, layer) {
-    layer.bindPopup("<h3>" + feature.properties.place +
-      "</h3><hr><p>" + feature.properties.mag + "</p>" + new Date(feature.properties.time) + "</p>");
-  }
-
-function markerSize(magnitude) {
-  return feature.properties.mag
-  
-  function onEachFeature(feature, layer) {
-    layer.bindPopup(marker"<h3>" + feature.properties.place +
-      "</h3><hr><p>" + feature.properties.mag + "</p>" + new Date(feature.properties.time) + "</p>");
-  }
-
-//replace the popup with a marker
-var marker = L.marker([37.09, -95.71].addTo(myMap);
-// create circle
-L.circle([37.09, -95.71]), {
-  color: "green",
-  fillColor: "green",
-  fillOpacity: 0.75,
-  radius: 500
-  }).addTo(myMap);
-
-//bind popup to marker
-marker.bindPopup("my popup")
-
-// Add a legend
-var legend = L.control({position: 'bottomright'});
-
-legend.onAdd = function (map) {
-
-    var div = L.DomUtil.create('div', 'info legend'),
-        grades = [0, 10, 20, 50, 60, 70],
-        labels = [];
-
-    // loop through our density intervals and generate a label with a colored square for each interval
-    for (var i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+function getRadius(mag) {
+  return mag * 6;
     }
-
-    return div;
-};
-
-legend.addTo(map);
-
+function getColor(d) {
+      return d > 100 ? '#FF4500' :
+      d > 50  ? '#FF8C00' :
+      d > 30  ? '#FFA500' :
+      d > 20  ? '#FF6347' :
+      d > 15   ? '#FF7F50' :
+      d > 10   ? '#FFD700' :
+      d > 0   ? '#ffe44d' :
+                 '#FFEDA0';
+  }
+  function style(feature) {
+    return {
+        fillColor: getColor(feature.geometry.coordinates[2]),
+        opacity: 1,
+        fillOpacity: 1,
+        color: "#000000",
+        radius: getRadius(feature.properties.mag),
+        stroke: true,
+        weight: 0.5
+    };  
+ }
+ function onEachFeature(feature, layer) {
+  layer.bindPopup(`<h3>Location: ${feature.properties.place} 
+    </h3><hr><p> Magnitude: ${feature.properties.mag}</p><p>Depth: ${feature.geometry.coordinates[2]}</p>
+    <p>Date and Time: ${new Date(feature.properties.time)}</p>`);
+}
+ 
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature
+    pointToLayer: function(feature, latlng) {
+      return L.circleMarker(latlng)
+    },
+    onEachFeature: onEachFeature,
+    style: style
   });
 
   // Sending our earthquakes layer to the createMap function
@@ -133,4 +123,26 @@ function createMap(earthquakes) {
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
   }).addTo(myMap);
+
+// Add a legend
+// var legend = L.control({position: 'bottomright'});
+
+// legend.onAdd = function (map) {
+
+//     var div = L.DomUtil.create('div', 'info legend'),
+//     //     grades = [0, 50, 20, 40, 50, 70, 90],
+//     //     labels = [];
+
+//     // // loop through our depth data and generate a label with a colored square for each interval
+//     // // for (var i = 0; i < geometry.depth[2]; i++) {
+//     // //     div.innerHTML +=
+//     // //         '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+//     // //         grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+//     // // }
+
+//     return div;
+// };
+
+// legend.addTo(myMap);  
 }
+
