@@ -1,23 +1,4 @@
-//can get basic information from the website for leavelet and chloropleth
-//INSTRUCTIONS create leaflet mep for earthquakes
-//using dataset based on their lng and lat
-//markers size/colors to refelct magnitude of earthquakes by size and depth
-//magnitude = size, depth = color
-
-//file layout https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson
-//features [{"type": "Feature", "properties": {"mag". 6.3, }}]
-//????where is the depth??
-
-
-//STEPS
-// see leaflet and chloropleth websites
-// create initial map object - inserted into div with id of 'map'
-//set long, lat, starting zoom level
-// add tile layer (background map) - use addTo to add objects to our map
-
-// Store our API endpoint inside queryUrl
-
-//can change this query information to filter or call different data.
+// Define query URL with filter for lat lng
 var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=" +
   "2014-01-02&maxlongitude=-69.52148437&minlongitude=-123.83789062&maxlatitude=48.74894534&minlatitude=25.16517337";
 
@@ -28,14 +9,15 @@ d3.json(queryUrl, function(data) {
   console.log(data)
 });
 
+// Define function to run once for each feature in the features array
 function createFeatures(earthquakeData) {
 
-  // Define a function we want to run once for each feature in the features array
-  // Give each feature a popup describing the place and time of the earthquake
-  //onEach is a leaflet feature
+// Function to size circle based on magnitude
 function getRadius(mag) {
   return mag * 6;
     }
+
+// Function for color based on depth
 function getColor(d) {
       return d > 100 ? '#FF4500' :
       d > 50  ? '#FF8C00' :
@@ -46,6 +28,8 @@ function getColor(d) {
       d > 0   ? '#ffe44d' :
                  '#FFEDA0';
   }
+  
+  // Style for magnitude circle
   function style(feature) {
     return {
         fillColor: getColor(feature.geometry.coordinates[2]),
@@ -57,6 +41,7 @@ function getColor(d) {
         weight: 0.5
     };  
  }
+ // Give each feature a popup with earthquake info
  function onEachFeature(feature, layer) {
   layer.bindPopup(`<h3>Location: ${feature.properties.place} 
     </h3><hr><p> Magnitude: ${feature.properties.mag}</p><p>Depth: ${feature.geometry.coordinates[2]}</p>
@@ -108,7 +93,7 @@ function createMap(earthquakes) {
     Earthquakes: earthquakes
   };
 
-  // Create our map, giving it the streetmap and earthquakes layers to display on load
+  // Create myMap, giving it the streetmap and earthquakes layers to display on load
   var myMap = L.map("map", {
     center: [
       37.09, -95.71
@@ -117,32 +102,31 @@ function createMap(earthquakes) {
     layers: [streetmap, earthquakes]
   });
 
-  // Create a layer control
-  // Pass in our baseMaps and overlayMaps
+  // Create a layer control - pass in our baseMaps and overlayMaps
   // Add the layer control to the map
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
   }).addTo(myMap);
 
-// Add a legend
-// var legend = L.control({position: 'bottomright'});
+ // Add a legend to myMap
+var legend = L.control({position: 'bottomright'});
 
-// legend.onAdd = function (map) {
+legend.onAdd = function(myMap) {
 
-//     var div = L.DomUtil.create('div', 'info legend'),
-//     //     grades = [0, 50, 20, 40, 50, 70, 90],
-//     //     labels = [];
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 10, 15, 20, 30, 50, 100],
+        labels = [];
 
-//     // // loop through our depth data and generate a label with a colored square for each interval
-//     // // for (var i = 0; i < geometry.depth[2]; i++) {
-//     // //     div.innerHTML +=
-//     // //         '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-//     // //         grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-//     // // }
+    // loop through our depth data and generate a colors
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+      }
+      div.innerHTML = labels.join('<br>');
+      return div;
+};
 
-//     return div;
-// };
-
-// legend.addTo(myMap);  
+legend.addTo(myMap);  
 }
 
