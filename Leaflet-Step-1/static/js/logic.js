@@ -25,7 +25,7 @@ function getColor(d) {
       d > 20  ? '#FF6347' :
       d > 15   ? '#FF7F50' :
       d > 10   ? '#FFD700' :
-      d > 0   ? '#ffe44d' :
+      d > 0   ? '#98EE00' :
                  '#FFEDA0';
   }
   
@@ -111,22 +111,31 @@ function createMap(earthquakes) {
  // Add a legend to myMap
 var legend = L.control({position: 'bottomright'});
 
-legend.onAdd = function(myMap) {
+legend.onAdd = function() {
 
-    var div = L.DomUtil.create('div', 'info legend'),
-        grades = [0, 10, 15, 20, 30, 50, 100],
-        labels = [];
+    var div = L.DomUtil.create('div', 'info legend')
+    var grades = [0, 10, 15, 20, 30, 50, 100];
+    var colors = [
+      '#98EE00',
+      '#FFD700',
+      '#FF7F50',
+      '#FF6347',
+      '#FFA500',
+      '#FF8C00',
+      '#FF4500' 
+        ]
 
     // loop through our depth data and generate a colors
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
-            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            '<i style="background:' + colors[i] + '"></i> ' +
             grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
       }
-      div.innerHTML = labels.join('<br>');
+      div.innerHTML='<h3>Legend</h3>'+div.innerHTML
       return div;
 };
 
 legend.addTo(myMap);  
 }
 
+    
